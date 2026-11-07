@@ -1,0 +1,27 @@
+@startuml
+actor Admisionista as A
+participant "Vista Flask\n(/admision)" as V
+database "BD Sede" as DB
+participant "MPIEstudiante" as MPI
+participant "MapperEstudiante" as MAP
+participant "HAPI FHIR" as H
+participant "HealthServiceBus" as BUS
+
+A -> V : POST /admision/registrar (datos del paciente)
+V -> DB : INSERT INTO pacientes (fhir_patient_id = NULL)
+V -> MPI : calcular_score(nuevo, candidatos otras sedes)
+MPI --> V : score (>= 0.9 : posible identidad federada)
+V --> A : Paciente registrado + aviso MPI
+
+A -> V : POST /admision/migrar (sede)
+loop por cada paciente pendiente
+  V -> MAP : mapear_paciente(paciente)
+  MAP -> H : POST /Patient
+  H --> MAP : 201 Created (id)
+  V -> DB : UPDATE pacientes SET fhir_patient_id = id
+  V -> H : POST /Encounter, /Condition, /Observation
+  V -> MPI : resolver_identidad(paciente, candidatos)
+  V -> BUS : publicar("paciente.federado", evento)
+end
+V --> A : Migración terminada
+@enduml

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Reportero{% endblock %}
+{% block contenido %}
+<h1>📊 Vista del Reportero</h1>
+<p class="vacio">Se actualiza automáticamente cada 3 segundos. <span id="estado"></span></p>
+<h2>Cobertura de migración a FHIR por ciudad</h2>
+<div class="grid" id="sedes"></div>
+<h2>Totales en el servidor HAPI FHIR</h2>
+<div class="grid" id="totales"></div>
+<div class="grid">
+  <div class="card"><h2 style="margin-top:0">Top 5 diagnósticos</h2><table id="top"></table></div>
+  <div class="card"><h2 style="margin-top:0">Pacientes en más de una sede (MPI)</h2><table id="dups"></table></div>
+</div>
+<script>
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function pintar(d) {
+  document.getElementById("sedes").innerHTML = d.sedes.map(s => `
+    <div class="card"><strong>${esc(s.ciudad)}</strong>
+      <div class="num">${s.cobertura_pct.toFixed(1)}%</div>
+      <div class="barra"><div style="width:${s.cobertura_pct}%"></div></div>
+      <small>${s.migrados} migrados de ${s.total} · ${s.pendientes} pendientes</small>
+      <div style="margin-top:8px"><small>Campos Res. 866 diligenciados: <strong>${s.campos57_pct.toFixed(0)}%</strong> de 57 · obligatorios: <strong>${s.obligatorios_pct.toFixed(0)}%</strong></small></div></div>`).join("");
+  const f = d.fhir;
+  document.getElementById("totales").innerHTML = f.error
+    ? `<div class="msg error">HAPI FHIR no responde: ${esc(f.error)}</div>`
+    : ["Patient","Encounter","Condition","Observation","MedicationRequest","AllergyIntolerance"].map(t =>
+        `<div class="card"><strong>${t}</strong><div class="num">${f[t] ?? 0}</div></div>`).join("");
+  document.getElementById("top").innerHTML = "<tr><th>Código</th><th>Descripción</th><th>Casos</th></tr>" +
+    ((f.top_diagnosticos || []).map(t => `<tr><td>${esc(t.codigo)}</td><td>${esc(t.desc)}</td><td>${t.total}</td></tr>`).join("")
+     || '<tr><td colspan="3" class="vacio">Sin datos aún</td></tr>');
+  document.getElementById("dups").innerHTML = "<tr><th>Documento</th><th>Sedes</th></tr>" +
+    (d.duplicados.map(x => `<tr><td>${esc(x.documento)}</td><td>${x.sedes.map(esc).join(", ")}</td></tr>`).join("")
+     || '<tr><td colspan="2" class="vacio">Ninguno</td></tr>');
+}
+function refrescar() {
+  fetch("/api/reportes").then(r => r.json()).then(d => { pintar(d); document.getElementById("estado").textContent = "Última actualización: " + new Date().toLocaleTimeString(); });
+}
+refrescar(); setInterval(refrescar, 3000);
+</script>
+{% endblock %}

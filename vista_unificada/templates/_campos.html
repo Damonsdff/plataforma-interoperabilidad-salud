@@ -1,0 +1,11 @@
+{% macro sel(nombre, catalogo, etiqueta, n, requerido=False, valor=None, vacio=True) %}
+<label>{{ etiqueta }} <span class="n">#{{ n }}</span>
+  <select name="{{ nombre }}" {{ 'required' if requerido }}>
+    {% if vacio or not requerido %}<option value="">—</option>{% endif %}
+    {% for c, d in opciones(catalogo) %}<option value="{{ c }}" {{ 'selected' if valor == c }}>{{ c }} · {{ d }}</option>{% endfor %}
+  </select></label>
+{% endmacro %}
+{% macro txt(nombre, etiqueta, n, requerido=False, tipo='text', valor='', extra='') %}
+<label>{{ etiqueta }} <span class="n">#{{ n }}</span>
+  <input name="{{ nombre }}" type="{{ tipo }}" value="{{ valor }}" {{ 'required' if requerido }} {{ extra|safe }}></label>
+{% endmacro %}

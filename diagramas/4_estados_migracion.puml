@@ -1,0 +1,10 @@
+@startuml
+[*] --> PENDIENTE : paciente registrado\n(fhir_patient_id = NULL)
+PENDIENTE --> ENVIANDO : migrar_sede()
+ENVIANDO --> MIGRADO : HAPI responde 201\n(fhir_patient_id asignado)
+ENVIANDO --> ERROR : HAPI rechaza o no responde
+ERROR --> PENDIENTE : reintentar migración
+MIGRADO --> FEDERADO : MPI score >= 0.9\ncon otra sede
+MIGRADO --> [*]
+FEDERADO --> [*]
+@enduml

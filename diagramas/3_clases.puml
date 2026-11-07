@@ -1,0 +1,96 @@
+@startuml
+class Sede {
+  +id_sede : int
+  +nombre_ciudad : str
+  +vendor_his : str
+  +vendor_emr : str
+  +vendor_lis_pacs : str
+}
+class Paciente {
+  +id_paciente : UUID
+  +documento_identidad : str
+  +tipo_documento : str
+  +nombre_completo : str
+  +fecha_nacimiento : date
+  +sexo : str
+  +fhir_patient_id : str
+  +esta_migrado() : bool
+}
+class Encuentro {
+  +id_encuentro : UUID
+  +fecha_atencion : datetime
+  +tipo_encuentro : str
+  +estado_migracion : str
+}
+class Condicion {
+  +codigo_cie10 : str
+  +descripcion : str
+}
+class Observacion {
+  +codigo_loinc : str
+  +valor : str
+  +unidad : str
+}
+class IdentidadFederada {
+  +id_mpi : UUID
+  +score_coincidencia : float
+}
+abstract class HL7v2ToFhirMapper {
+  +mapear_paciente()
+  +mapear_condicion()
+  +mapear_observacion()
+  +generar_bundle_document()
+  +enviar_a_servidor_fhir()
+}
+abstract class MPIService {
+  +calcular_score()
+  +resolver_identidad()
+}
+class MapperEstudiante
+class MPIEstudiante
+class HealthServiceBus {
+  +publicar(tema, evento)
+}
+class "App Flask (4 vistas + matriz)" as App
+class Campos57 <<campos57.py>> {
+  +CAMPOS : 57 campos
+  +CATALOGOS
+  +calcular_edad()
+}
+class Esquema57 <<esquema57.py>> {
+  +asegurar_esquema()
+  +insertar_paciente()
+  +insertar_atencion()
+  +completar_atencion()
+  +leer_atenciones()
+  +validar_paciente()
+  +validar_atencion()
+}
+class Historia57Fhir <<historia57_fhir.py>> {
+  +completar_paciente_fhir()
+  +mapear_encuentro()
+  +mapear_condicion_cie10()
+  +mapear_medicacion()
+  +enviar_atencion()
+}
+class RDA <<rda.py>> {
+  +generar_rda()
+}
+
+Sede "1" -- "0..*" Paciente
+Paciente "1" -- "0..*" Encuentro
+Encuentro "1" *-- "0..*" Condicion
+Encuentro "1" *-- "0..*" Observacion
+IdentidadFederada o-- "2..*" Paciente
+HL7v2ToFhirMapper <|-- MapperEstudiante
+MPIService <|-- MPIEstudiante
+App ..> MapperEstudiante
+App ..> MPIEstudiante
+App ..> HealthServiceBus
+App ..> Esquema57
+App ..> RDA
+Esquema57 ..> Campos57
+MapperEstudiante ..> Historia57Fhir
+Historia57Fhir ..> Campos57
+Paciente "1" o-- "0..1" Campos57 : extra (campos 3, 6-15, 24, 51-57)
+@enduml

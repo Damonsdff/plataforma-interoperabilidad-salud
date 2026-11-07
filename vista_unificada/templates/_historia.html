@@ -1,0 +1,49 @@
+{% macro historia(datos) %}
+<div class="card">
+  <h2 style="margin-top:0">Identidad federada</h2>
+  {% if datos.pacientes %}
+  <div class="tabla-scroll"><table>
+    <tr><th>Nombre</th><th>Sexo</th><th>Nacimiento</th><th>Ocupación</th><th>Residencia</th><th>Contacto</th><th>Responsable</th><th>Sede</th><th>Patient FHIR</th></tr>
+    {% for p in datos.pacientes %}
+    <tr><td>{{ p.nombre }}</td><td>{{ p.genero }}</td><td>{{ p.nacimiento }}</td><td>{{ p.ocupacion }}</td>
+        <td>{{ p.municipio }}{% if p.direccion %}<br><small>{{ p.direccion }}</small>{% endif %}</td>
+        <td>{{ p.telefono }}{% if p.correo %}<br><small>{{ p.correo }}</small>{% endif %}</td>
+        <td>{{ p.responsable }}{% if p.parentesco %}<br><small>{{ p.parentesco }}</small>{% endif %}</td>
+        <td>{{ p.sede }}</td><td>Patient/{{ p.id }}</td></tr>
+    {% endfor %}
+  </table></div>
+  {% if datos.pacientes|length > 1 %}<p>Este documento aparece en {{ datos.pacientes|length }} sedes: la historia de abajo es la suma de todas.</p>{% endif %}
+  {% else %}<p class="vacio">No hay pacientes migrados a FHIR con ese documento.</p>{% endif %}
+</div>
+<div class="card">
+  <h2 style="margin-top:0">Atenciones</h2>
+  {% if datos.atenciones %}
+  <div class="tabla-scroll"><table><tr><th>Sede</th><th>Ingreso</th><th>Salida</th><th>Entorno</th><th>Modalidad</th><th>Vía</th><th>Triage</th><th>Entidad</th><th>Causa</th><th>Dx</th><th>Salida</th><th>Incap. (días)</th></tr>
+  {% for a in datos.atenciones %}<tr><td>{{ a.sede }}</td><td>{{ a.inicio }}</td><td>{{ a.fin }}</td><td>{{ a.entorno }}</td><td>{{ a.modalidad }}</td><td>{{ a.via }}</td>
+    <td>{{ a.triage }}</td><td>{{ a.entidad }}</td><td>{{ a.causa }}</td><td>{{ a.diagnosticos }}</td><td>{{ a.salida }}</td><td>{{ a.incapacidad }}</td></tr>{% endfor %}</table></div>
+  {% else %}<p class="vacio">Sin atenciones registradas.</p>{% endif %}
+</div>
+<div class="card">
+  <h2 style="margin-top:0">Diagnósticos (CIE-10)</h2>
+  {% if datos.condiciones %}
+  <table><tr><th>Código</th><th>Descripción</th><th>Rol</th><th>Sede</th><th>Fecha</th></tr>
+  {% for c in datos.condiciones %}<tr><td>{{ c.codigo }}</td><td>{{ c.desc }}</td><td>{{ c.rol }}</td><td>{{ c.sede }}</td><td>{{ c.fecha }}</td></tr>{% endfor %}</table>
+  {% else %}<p class="vacio">Sin diagnósticos registrados.</p>{% endif %}
+</div>
+<div class="card">
+  <h2 style="margin-top:0">Medicamentos y alergias</h2>
+  {% if datos.medicamentos %}
+  <table><tr><th>Medicamento</th><th>Dosis / frecuencia</th><th>Vía</th><th>Días</th><th>Unidades</th><th>Sede</th></tr>
+  {% for m in datos.medicamentos %}<tr><td>{{ m.nombre }}</td><td>{{ m.dosis }}</td><td>{{ m.via }}</td><td>{{ m.dias }}</td><td>{{ m.unidades }}</td><td>{{ m.sede }}</td></tr>{% endfor %}</table>
+  {% else %}<p class="vacio">Sin medicamentos registrados.</p>{% endif %}
+  <p><strong>Alergias:</strong> {% if datos.alergias %}{% for a in datos.alergias %}<span class="pill">{{ a.alergia }} ({{ a.sede }})</span> {% endfor %}{% else %}<span class="vacio">ninguna registrada</span>{% endif %}</p>
+</div>
+<div class="card">
+  <h2 style="margin-top:0">Observaciones (LOINC) y riesgos</h2>
+  {% if datos.observaciones %}
+  <table><tr><th>Código</th><th>Observación</th><th>Valor</th><th>Sede</th><th>Fecha</th></tr>
+  {% for o in datos.observaciones %}<tr><td>{{ o.codigo }}</td><td>{{ o.desc }}</td><td>{{ o.valor }} {{ o.unidad }}</td><td>{{ o.sede }}</td><td>{{ o.fecha }}</td></tr>{% endfor %}</table>
+  {% else %}<p class="vacio">Sin observaciones registradas.</p>{% endif %}
+  <p>Encuentros clínicos: <strong>{{ datos.encuentros }}</strong></p>
+</div>
+{% endmacro %}

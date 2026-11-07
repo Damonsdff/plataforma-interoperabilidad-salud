@@ -1,0 +1,1 @@
+fhir.resources>=8   # opcional: valida la estructura FHIR R4 en las pruebas

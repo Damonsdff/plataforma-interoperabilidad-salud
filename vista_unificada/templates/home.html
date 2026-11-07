@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<h1>Bienvenido</h1>
+<p>Seleccione su rol para ingresar. Todas las vistas leen y escriben sobre las bases de las 3 sedes
+(Sincelejo, Cartagena, Corozal) y el servidor HAPI FHIR R4.</p>
+<div class="grid">
+  <a class="card rol" href="{{ url_for('vista_paciente') }}"><h2>🧑 Paciente</h2><p>Consulta su historia clínica unificada de todas las sedes.</p></a>
+  <a class="card rol" href="{{ url_for('vista_medico') }}"><h2>🩺 Médico</h2><p>Busca pacientes, revisa su historia y registra diagnósticos y observaciones.</p></a>
+  <a class="card rol" href="{{ url_for('vista_admision') }}"><h2>📋 Admisionista</h2><p>Registra pacientes, verifica duplicados (MPI) y lanza la migración a FHIR.</p></a>
+  <a class="card rol" href="{{ url_for('vista_reportes') }}"><h2>📊 Reportero</h2><p>Cobertura de migración, totales FHIR y duplicados entre sedes.</p></a>
+  <a class="card rol" href="{{ url_for('vista_matriz') }}"><h2>✅ Matriz de 57 campos</h2><p>Trazabilidad de la Res. 866/2021 por sede (auditor, HU-06).</p></a>
+</div>
+{% endblock %}

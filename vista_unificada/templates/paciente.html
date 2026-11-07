@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_historia.html" import historia %}
+{% block titulo %}Paciente{% endblock %}
+{% block contenido %}
+<h1>🧑 Vista del Paciente</h1>
+<div class="card">
+  <form class="fila" method="get">
+    <label>Mi número de documento<input name="documento" value="{{ documento }}" placeholder="p. ej. 1007654321" required></label>
+    <button>Ver mi historia clínica</button>
+  </form>
+</div>
+{% if error %}<div class="msg error">{{ error }}</div>{% endif %}
+{% if datos %}{{ historia(datos) }}
+{% if datos.pacientes %}<p>Descargar mi Resumen Digital de Atención (RDA, FHIR):
+  {% for p in datos.pacientes %}<a href="{{ url_for('medico_rda', patient_id=p.id) }}" target="_blank">{{ p.sede }}</a> {% endfor %}</p>{% endif %}
+{% endif %}
+{% endblock %}

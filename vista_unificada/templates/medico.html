@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from "_historia.html" import historia %}
+{% from "_campos.html" import sel, txt with context %}
+{% block titulo %}Médico{% endblock %}
+{% block contenido %}
+<h1>🩺 Vista del Médico</h1>
+<div class="card">
+  <form class="fila" method="get">
+    <label>Documento del paciente<input name="documento" value="{{ documento }}" placeholder="p. ej. 1007654321" required></label>
+    <button>Buscar paciente</button>
+  </form>
+</div>
+{% if error %}<div class="msg error">{{ error }}</div>{% endif %}
+{% if documento %}
+<div class="card">
+  <h2 style="margin-top:0">Atenciones por completar <span class="n">(admisión registró los campos 16-23)</span></h2>
+  {% if pendientes %}
+  <form method="post" action="{{ url_for('medico_completar') }}">
+    <input type="hidden" name="documento" value="{{ documento }}">
+    <fieldset><legend>Atención</legend><div class="formgrid">
+      <label class="ancho">Atención a completar
+        <select name="atencion" id="sel-atencion" onchange="document.getElementById('h-bd').value=this.selectedOptions[0].dataset.bd; document.getElementById('h-id').value=this.value">
+          {% for a in pendientes %}<option value="{{ a.id_atencion }}" data-bd="{{ a.bd }}">{{ a.sede }} · {{ a.paciente }} · {{ a.ingreso }} · {{ a.entorno }} · {{ a.causa }}</option>{% endfor %}
+        </select></label>
+      <input type="hidden" name="bd" id="h-bd" value="{{ pendientes[0].bd }}"><input type="hidden" name="id_atencion" id="h-id" value="{{ pendientes[0].id_atencion }}">
+    </div></fieldset>
+    <fieldset><legend>3. Tecnologías en salud (medicamento) — opcional</legend><div class="formgrid">
+      {{ txt("descripcion_medicamento","Descripción del medicamento",25,False,extra='placeholder="Acetaminofén 500mg"') }}
+      {{ txt("dosis","Dosis",26,False,extra='placeholder="500mg"') }}
+      {{ sel("via_administracion","via_administracion","Vía de administración",27) }}
+      {{ txt("frecuencia","Frecuencia",28,False,extra='placeholder="Cada 8 horas"') }}
+      {{ txt("dias_tratamiento","Días de tratamiento",29,False,"number",extra='min="0"') }}
+      {{ txt("unidades_aplicadas","Unidades aplicadas",30,False,"number",extra='min="0"') }}
+      {{ txt("id_personal_salud","Identificación del personal de salud",31,False,extra='placeholder="98765432"') }}
+      {{ txt("nombre_personal_salud","Nombre del personal de salud","31b") }}
+      {{ sel("finalidad_tecnologia","finalidad_tecnologia","Finalidad de la tecnología",32) }}
+    </div></fieldset>
+    <fieldset><legend>Diagnósticos (CIE-10)</legend><div class="formgrid">
+      {{ sel("tipo_dx_ingreso","tipo_diagnostico","Tipo de diagnóstico de ingreso",33) }}
+      {{ txt("dx_ingreso","Diagnóstico de ingreso",34,False,extra='list="cie10" placeholder="J00"') }}
+      {{ sel("tipo_dx_egreso","tipo_diagnostico","Tipo de diagnóstico de egreso",35) }}
+      {{ txt("dx_egreso","Diagnóstico de egreso",36,True,extra='list="cie10" placeholder="J18.9"') }}
+      {{ txt("dx_rel1","Diagnóstico relacionado 1",37,False,extra='list="cie10"') }}
+      {{ txt("dx_rel2","Diagnóstico relacionado 2",38,False,extra='list="cie10"') }}
+      {{ txt("dx_rel3","Diagnóstico relacionado 3",39,False,extra='list="cie10"') }}
+    </div></fieldset>
+    <fieldset><legend>5. Datos de egreso</legend><div class="formgrid">
+      {{ txt("fecha_salida","Fecha y hora de salida",40,True,"datetime-local",ahora) }}
+      {{ sel("condicion_salida","condicion_salida","Condición de salida",41,True,"01",False) }}
+      {{ txt("dx_muerte","Diagnóstico de muerte (si aplica)",42,False,extra='list="cie10"') }}
+      {{ txt("codigo_prestador","Código del prestador (habilitación)",43,True,extra='placeholder="110010001234"') }}
+      {{ sel("tipo_incapacidad","tipo_incapacidad","Tipo de incapacidad",44) }}
+      {{ txt("dias_incapacidad","Días de incapacidad",45,False,"number",extra='min="0"') }}
+      {{ txt("dias_lic_maternidad","Días de licencia de maternidad",46,False,"number",extra='min="0"') }}
+      {{ txt("alergias","Alergias (separadas por coma)",47,False,extra='placeholder="Penicilina, Mariscos"') }}
+      {{ txt("antecedente_familiar","Antecedentes familiares",48,False,extra='placeholder="Padre: HTA, Madre: DM2"') }}
+      {{ txt("riesgos_ocupacionales","Riesgos ocupacionales",49,False,extra='placeholder="Ruido, Polvo"') }}
+      {{ txt("responsable_egreso","Responsable del egreso (médico)",50,True,extra='placeholder="Dr. Carlos Rodríguez"') }}
+    </div></fieldset>
+    <datalist id="cie10">{% for c, d in cie10 %}<option value="{{ c }}">{{ d }}</option>{% endfor %}</datalist>
+    <button>Guardar atención completa</button>
+  </form>
+  {% else %}<p class="vacio">No hay atenciones pendientes de completar para este documento.</p>{% endif %}
+</div>
+{% endif %}
+{% if datos %}
+  {{ historia(datos) }}
+  {% if datos.pacientes %}
+  <div class="card">
+    <h2 style="margin-top:0">Registrar diagnóstico rápido</h2>
+    <form class="fila" method="post" action="{{ url_for('medico_registrar') }}">
+      <input type="hidden" name="documento" value="{{ documento }}"><input type="hidden" name="tipo" value="condicion">
+      <label>Paciente / sede
+        <select name="patient_id">{% for p in datos.pacientes %}<option value="{{ p.id }}">{{ p.nombre }} — {{ p.sede }}</option>{% endfor %}</select></label>
+      <label>CIE-10<input name="codigo" list="cie10" required placeholder="I10"></label>
+      <label>Descripción<input name="descripcion" list="cie10d" required placeholder="Hipertensión esencial" size="34"></label>
+      <button>Guardar diagnóstico</button>
+    </form>
+    <datalist id="cie10d">{% for c, d in cie10 %}<option value="{{ d }}"></option>{% endfor %}</datalist>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Registrar observación (signos vitales)</h2>
+    <form class="fila" method="post" action="{{ url_for('medico_registrar') }}" id="f-obs">
+      <input type="hidden" name="documento" value="{{ documento }}"><input type="hidden" name="tipo" value="observacion">
+      <label>Paciente / sede
+        <select name="patient_id">{% for p in datos.pacientes %}<option value="{{ p.id }}">{{ p.nombre }} — {{ p.sede }}</option>{% endfor %}</select></label>
+      <label>Tipo de observación
+        <select id="loinc-sel">{% for c, d, u, uc in loinc %}<option value="{{ c }}" data-d="{{ d }}" data-u="{{ u }}" data-uc="{{ uc }}">{{ d }} ({{ c }})</option>{% endfor %}</select></label>
+      <input type="hidden" name="codigo" id="o-cod"><input type="hidden" name="descripcion" id="o-desc"><input type="hidden" name="ucum" id="o-ucum">
+      <label>Valor<input name="valor" type="number" step="any" required style="width:110px"></label>
+      <label>Unidad<input name="unidad" id="o-uni" required style="width:90px"></label>
+      <button>Guardar observación</button>
+    </form>
+    <script>
+      const sel = document.getElementById("loinc-sel");
+      function sync() { const o = sel.selectedOptions[0];
+        document.getElementById("o-cod").value = o.value; document.getElementById("o-desc").value = o.dataset.d;
+        document.getElementById("o-uni").value = o.dataset.u; document.getElementById("o-ucum").value = o.dataset.uc; }
+      sel.addEventListener("change", sync); sync();
+    </script>
+  </div>
+  <p>Datos crudos FHIR:
+    {% for p in datos.pacientes %}<a href="{{ fhir }}/Patient/{{ p.id }}/$everything" target="_blank">Patient/{{ p.id }}/$everything</a> ·
+      <a href="{{ url_for('medico_rda', patient_id=p.id) }}" target="_blank">RDA (Composition/$document) de {{ p.sede }}</a> {% endfor %}</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

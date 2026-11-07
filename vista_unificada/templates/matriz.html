@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titulo %}Matriz 57 campos{% endblock %}
+{% block contenido %}
+<h1>✅ Matriz de trazabilidad — 57 campos (Res. 866/2021)</h1>
+<p>Para cada campo: dónde se guarda, a qué elemento FHIR R4 se envía y qué porcentaje de los registros reales de cada sede lo tiene diligenciado.
+   <strong>Cubierto</strong> = el sistema lo captura (vista indicada) y lo envía a FHIR. Obligatorios: {{ obligatorios }}.
+   <a href="{{ url_for('matriz_csv') }}">Descargar CSV</a></p>
+<div class="card tabla-scroll">
+<table>
+  <tr><th>#</th><th>Grupo</th><th>Campo</th><th>Obl.</th><th>Captura</th><th>Tabla.columna</th><th>Elemento FHIR</th><th>Estado</th>
+      {% for s in sedes %}<th>{{ s.ciudad }}</th>{% endfor %}</tr>
+  {% for f in filas %}
+  <tr><td>{{ f.n }}</td><td>{{ f.grupo }}</td><td>{{ f.nombre }}</td><td>{{ '✔' if f.obligatorio else '' }}</td><td>{{ f.rol }}</td>
+      <td><code>{{ f.tabla }}.{{ f.columna }}</code></td><td><small>{{ f.fhir }}</small></td><td class="ok-c">{{ f.estado }}</td>
+      {% for s in sedes %}{% set d = f.sedes[s.ciudad] %}<td>{% if d %}{{ '%.0f'|format(d.pct) }}% <small>({{ d.llenos }}/{{ d.total }})</small>{% else %}—{% endif %}</td>{% endfor %}</tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

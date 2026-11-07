@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "_campos.html" import sel, txt with context %}
+{% block titulo %}Admisionista{% endblock %}
+{% block contenido %}
+<h1>📋 Vista del Admisionista</h1>
+{% if not motor %}<div class="msg error">Motor de interoperabilidad no disponible ({{ error_motor }}). Ejecute la app desde la raíz del proyecto.</div>{% endif %}
+<div class="card">
+  <h2 style="margin-top:0">Registrar paciente y atención <span class="n">(campos 1-24 y 51-57 de la Res. 866/2021 · * = obligatorio)</span></h2>
+  <form method="post" action="{{ url_for('admision_registrar') }}" id="f-adm">
+    <fieldset><legend>Sede</legend><div class="formgrid">
+      <label>Sede donde se registra
+        <select name="sede">{% for s in sedes %}<option value="{{ s.nombre_bd }}">{{ s.ciudad }}</option>{% endfor %}</select></label>
+    </div></fieldset>
+    <fieldset><legend>1. Identificación del usuario</legend><div class="formgrid">
+      {{ sel("tipo","tipo_documento","Tipo de documento",1,True,"CC",False) }}
+      {{ txt("documento","Número de documento",2,True,extra='style="width:100%"') }}
+      {{ sel("pais_nacionalidad","pais","País de nacionalidad",3,True,"CO",False) }}
+      {{ txt("nombre","Nombre completo",4,True,extra='placeholder="Nombres y apellidos"') }}
+      {{ txt("nacimiento","Fecha de nacimiento",5,True,"date",extra='max="'~hoy~'"') }}
+      <label>Edad y unidad <span class="n">#6-7</span><input value="se calcula al guardar" disabled></label>
+      {{ sel("sexo","sexo","Sexo",8,True,"M",False) }}
+      {{ sel("genero","genero","Género",9) }}
+      {{ txt("ocupacion","Ocupación",10) }}
+      <label>Voluntad anticipada <span class="n">#11</span><span><input type="checkbox" name="voluntad_anticipada" style="width:auto"> Tiene documento</span></label>
+      {{ sel("categoria_discapacidad","categoria_discapacidad","Categoría de discapacidad",12,False,"Ninguna") }}
+      {{ sel("pais_residencia","pais","País de residencia",13,True,"CO",False) }}
+      {{ sel("municipio_residencia","municipio_residencia","Municipio de residencia (DANE)",14,True,None,True) }}
+      {{ sel("etnia","etnia","Etnia",15,False,"Ninguna") }}
+      {{ txt("comunidad_etnica","Comunidad étnica",24) }}
+    </div></fieldset>
+    <fieldset><legend>Residencia y contacto</legend><div class="formgrid">
+      {{ sel("zona_residencia","zona_residencia","Zona de residencia",51,True,None,True) }}
+      {{ txt("direccion_residencia","Dirección de residencia",52,True) }}
+      {{ txt("telefono","Teléfono",53,False,"tel") }}
+      {{ txt("correo","Correo electrónico",54,False,"email") }}
+      {{ txt("nombre_responsable","Nombre del responsable",55) }}
+      {{ sel("parentesco_responsable","parentesco_responsable","Parentesco del responsable",56) }}
+      {{ txt("telefono_responsable","Teléfono del responsable",57,False,"tel") }}
+    </div></fieldset>
+    <fieldset><legend>2. Datos de la atención</legend><div class="formgrid">
+      {{ txt("entidad_salud","Entidad de salud (EPS)",16,True,extra='list="eps" placeholder="EPS Sanitas"') }}
+      {{ txt("fecha_ingreso","Fecha y hora de ingreso",17,True,"datetime-local",ahora) }}
+      {{ sel("modalidad_entrega","modalidad_entrega","Modalidad de entrega",18,True,"01",False) }}
+      {{ sel("entorno_atencion","entorno_atencion","Entorno de atención",19,True,"02",False) }}
+      {{ sel("via_ingreso","via_ingreso","Vía de ingreso",20,True,"01",False) }}
+      {{ txt("causa_atencion","Causa de la atención",21,True,extra='placeholder="Dolor abdominal agudo"') }}
+      {{ txt("fecha_triage","Fecha y hora del triage (solo urgencias)",22,False,"datetime-local") }}
+      {{ sel("clasificacion_triage","clasificacion_triage","Clasificación del triage",23) }}
+    </div></fieldset>
+    <datalist id="eps"><option>EPS Sanitas</option><option>Nueva EPS</option><option>Salud Total</option><option>Coosalud</option><option>Mutual Ser</option></datalist>
+    <button>Registrar paciente y atención</button>
+    <span class="n">Después de registrar, el médico completa tecnologías, diagnósticos y egreso (campos 25-50).</span>
+  </form>
+</div>
+{% for s in sedes %}
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px">
+    <h2 style="margin:0">{{ s.ciudad }} — {{ s.pendientes }} pendiente(s) de migrar</h2>
+    <form method="post" action="{{ url_for('admision_migrar') }}">
+      <input type="hidden" name="sede" value="{{ s.nombre_bd }}"><button {{ 'disabled' if s.pendientes == 0 }}>Migrar pendientes a FHIR</button>
+    </form>
+  </div>
+  {% if s.error %}<div class="msg error">Sin conexión a la base: {{ s.error }}</div>{% endif %}
+  <div class="tabla-scroll"><table style="margin-top:10px"><tr><th>Documento</th><th>Nombre</th><th>Nacimiento</th><th>Atenciones</th><th>Estado</th></tr>
+  {% for p in s.pacientes %}
+    <tr><td>{{ p[1] }} {{ p[0] }}</td><td>{{ p[2] }}</td><td>{{ p[3] }}</td>
+        <td>{{ p[5] }}{% if p[6] %} <span class="pill">{{ p[6] }} sin diagnóstico/egreso</span>{% endif %}</td>
+        <td>{% if p[4] %}✅ Migrado (Patient/{{ p[4] }}){% else %}⏳ Pendiente{% endif %}</td></tr>
+  {% endfor %}</table></div>
+</div>
+{% endfor %}
+{% endblock %}

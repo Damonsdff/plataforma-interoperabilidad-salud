@@ -1,0 +1,8 @@
+.venv
+.git
+__pycache__
+*.pyc
+docs
+diagramas
+*.zip
+*.rar

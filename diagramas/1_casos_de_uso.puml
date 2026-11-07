@@ -1,0 +1,39 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+actor "Paciente" as P
+actor "Médico" as M
+actor "Admisionista" as A
+actor "Reportero" as R
+actor "HAPI FHIR R4" as H <<sistema>>
+
+rectangle "Plataforma de interoperabilidad multi-sede" {
+  usecase "Consultar mi historia unificada" as CU1
+  usecase "Buscar paciente por documento" as CU2
+  usecase "Registrar diagnóstico (CIE-10)" as CU3
+  usecase "Registrar observación (LOINC)" as CU4
+  usecase "Registrar paciente en sede" as CU5
+  usecase "Verificar duplicados (MPI)" as CU6
+  usecase "Migrar pacientes a FHIR" as CU7
+  usecase "Ver cobertura de migración" as CU8
+  usecase "Ver totales y diagnósticos" as CU9
+}
+
+P --> CU1
+M --> CU2
+M --> CU3
+M --> CU4
+A --> CU5
+A --> CU7
+R --> CU8
+R --> CU9
+CU5 ..> CU6 : <<include>>
+CU3 ..> CU2 : <<include>>
+CU4 ..> CU2 : <<include>>
+CU1 --> H
+CU2 --> H
+CU3 --> H
+CU4 --> H
+CU7 --> H
+CU9 --> H
+@enduml

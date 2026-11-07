@@ -1,0 +1,52 @@
+services:
+
+  pg_ips:
+    image: postgres:16
+    container_name: pg_ips
+    environment:
+      POSTGRES_USER: ips_admin
+      POSTGRES_PASSWORD: "kali"
+      POSTGRES_MULTIPLE_DATABASES: "historia_clinica_sede1,historia_clinica_sede2,historia_clinica_sede3,fhir_db"
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d
+      - pg_ips_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ips_admin -d historia_clinica_sede1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  hapi-fhir:
+    image: hapiproject/hapi:v6.10.1
+    container_name: hapi-fhir
+    environment:
+      HAPI_FHIR_VERSION: R4
+      JAVA_TOOL_OPTIONS: "-Xmx1024m"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  vista-unificada:
+    build:
+      context: .
+      dockerfile: vista_unificada/Dockerfile
+    container_name: vista-unificada
+    depends_on:
+      pg_ips:
+        condition: service_healthy
+      hapi-fhir:
+        condition: service_started
+    environment:
+      DB_HOST: pg_ips
+      DB_USER: ips_admin
+      DB_PASSWORD: "kali"
+      FHIR_BASE_URL: http://hapi-fhir:8080/fhir
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+volumes:
+  pg_ips_data:

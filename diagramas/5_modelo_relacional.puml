@@ -1,0 +1,68 @@
+@startuml
+hide circle
+skinparam linetype ortho
+entity "pacientes" as P {
+  *id_paciente : UUID <<PK>>
+  --
+  tipo_documento (1), documento_identidad (2)
+  pais_nacionalidad (3), nombre_completo (4)
+  fecha_nacimiento (5), edad (6), unidad_edad (7)
+  sexo (8), genero (9), ocupacion (10)
+  voluntad_anticipada (11), categoria_discapacidad (12)
+  pais_residencia (13), municipio_residencia (14)
+  etnia (15), comunidad_etnica (24)
+  zona_residencia (51), direccion_residencia (52)
+  telefono (53), correo (54)
+  nombre_responsable (55), parentesco_responsable (56)
+  telefono_responsable (57)
+  fhir_patient_id : marcador de migración
+}
+entity "atenciones" as A {
+  *id_atencion : UUID <<PK>>
+  --
+  id_paciente <<FK>>
+  entidad_salud (16), fecha_ingreso (17)
+  modalidad_entrega (18), entorno_atencion (19)
+  via_ingreso (20), causa_atencion (21)
+  fecha_triage (22), clasificacion_triage (23)
+  fhir_encounter_id : marcador de envío
+}
+entity "tecnologia_salud" as T {
+  *id_tecnologia : UUID <<PK>>
+  --
+  id_atencion <<FK>>
+  descripcion_medicamento (25), dosis (26)
+  via_administracion (27), frecuencia (28)
+  dias_tratamiento (29), unidades_aplicadas (30)
+  id_personal_salud (31) <<FK>>, finalidad_tecnologia (32)
+}
+entity "diagnostico" as D {
+  *id_diagnostico : UUID <<PK>>
+  --
+  id_atencion <<FK, único>>
+  tipo_dx_ingreso (33), dx_ingreso (34)
+  tipo_dx_egreso (35), dx_egreso (36)
+  dx_rel1 (37), dx_rel2 (38), dx_rel3 (39)
+}
+entity "egreso" as E {
+  *id_egreso : UUID <<PK>>
+  --
+  id_atencion <<FK, único>>
+  fecha_salida (40), condicion_salida (41)
+  dx_muerte (42), codigo_prestador (43)
+  tipo_incapacidad (44), dias_incapacidad (45)
+  dias_lic_maternidad (46), alergias (47)
+  antecedente_familiar (48), riesgos_ocupacionales (49)
+  responsable_egreso (50)
+}
+entity "profesional_salud" as S {
+  *id_personal_salud <<PK>>
+  --
+  nombre, especialidad
+}
+P ||--o{ A
+A ||--o{ T
+A ||--o| D
+A ||--o| E
+S ||--o{ T
+@enduml
