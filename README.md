@@ -1,8 +1,8 @@
 # Plataforma de Interoperabilidad en Salud — Red de IPS Tres Sedes
 ## Parcial Final — Sistemas Distribuidos
 
-**Equipo:** [Nombre del equipo]  
-**Integrantes:** [Integrante 1] · [Integrante 2]  
+  
+**Integrantes:** santiago andres fuentes ·  María Lucia Sotelo 
 **Curso:** Sistemas Distribuidos  
 **Versión:** v1.0
 
