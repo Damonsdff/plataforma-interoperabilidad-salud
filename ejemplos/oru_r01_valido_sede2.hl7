@@ -1,0 +1,9 @@
+MSH|^~\&|LIS-CARTAGENA|SEDE-2|HSB|IPS-RED|20261107143000||ORU^R01|MSG002-S2-20261107|P|2.5
+PID|1||1007654321^^^CC||Perez^Juan^Alberto||19850315|M
+PV1|1|O|IPS-CAR^^2||||MED-002^Rodriguez^Ana^^^Dra.|||03||||||||20261107143000
+OBX|1|NM|8480-6^Presión sistólica^LN||120|mm[Hg]|90-140||||F
+OBX|2|NM|8462-4^Presión diastólica^LN||80|mm[Hg]|60-90||||F
+OBX|3|NM|8867-4^Frecuencia cardiaca^LN||72|/min|60-100||||F
+OBX|4|NM|8310-5^Temperatura corporal^LN||36.8|Cel|36-37.5||||F
+OBX|5|NM|29463-7^Peso corporal^LN||73.5|kg||||F
+DG1|1||A09^Diarrea y gastroenteritis^I10|Gastroenteritis aguda|20261107|A

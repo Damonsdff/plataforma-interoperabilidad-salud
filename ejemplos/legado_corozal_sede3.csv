@@ -1,0 +1,4 @@
+documento;nombre;sexo;nacimiento;dx_local;fecha;triage;profesional
+1007654323;Carlos Ramirez Diaz;M;1978-11-03;Hipertension esencial;2026-11-07T09:30:00;3;MED-003
+1007654324;Ana Torres Meza;F;1995-01-30;Infeccion urinaria;2026-11-07T11:00:00;4;MED-003
+1007654325;Luis Herrera Pineda;M;1982-09-14;Diabetes tipo 2;2026-11-07T14:00:00;3;MED-004

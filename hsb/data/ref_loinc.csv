@@ -1,0 +1,18 @@
+local;loinc;descripcion;ucum
+HEMOGLOBINA;718-7;Hemoglobina [Masa/volumen] en sangre;g/dL
+GLUCOSA;2339-0;Glucosa [Masa/volumen] en sangre;mg/dL
+GLUCOSA EN SANGRE;2339-0;Glucosa [Masa/volumen] en sangre;mg/dL
+CREATININA;2160-0;Creatinina [Masa/volumen] en suero;mg/dL
+COLESTEROL;2093-3;Colesterol [Masa/volumen] en suero;mg/dL
+TRIGLICERIDOS;2571-8;Triglicéridos [Masa/volumen] en suero;mg/dL
+SODIO;2951-2;Sodio [Moles/volumen] en suero;mmol/L
+POTASIO;2823-3;Potasio [Moles/volumen] en suero;mmol/L
+PRESION SISTOLICA;8480-6;Presión sistólica;mm[Hg]
+PRESION DIASTOLICA;8462-4;Presión diastólica;mm[Hg]
+FRECUENCIA CARDIACA;8867-4;Frecuencia cardiaca;/min
+TEMPERATURA;8310-5;Temperatura corporal;Cel
+PESO;29463-7;Peso corporal;kg
+TALLA;8302-2;Talla;cm
+IMC;39156-5;Índice de masa corporal;kg/m2
+LEUCOCITOS;6690-2;Recuento de leucocitos;10*3/uL
+PLAQUETAS;777-3;Recuento de plaquetas;10*3/uL

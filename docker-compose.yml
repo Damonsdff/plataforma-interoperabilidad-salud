@@ -27,6 +27,43 @@ services:
       JAVA_TOOL_OPTIONS: "-Xmx1024m"
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/fhir/metadata -o /dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+    restart: unless-stopped
+
+  hsb:
+    build:
+      context: .
+      dockerfile: hsb/Dockerfile
+    container_name: hsb
+    depends_on:
+      pg_ips:
+        condition: service_healthy
+      hapi-fhir:
+        condition: service_started
+    environment:
+      DB_HOST: pg_ips
+      DB_USER: ips_admin
+      DB_PASSWORD: "kali"
+      FHIR_BASE_URL: http://hapi-fhir:8080/fhir
+      HSB_DB: /data/hsb.db
+      AUDIT_DB: /data/auditoria.db
+      JWT_SECRET: "ips-secret-jwt-2026-cambiar-en-produccion"
+      MAX_INTENTOS: "4"
+      ESPERA_BASE_S: "1"
+    volumes:
+      - hsb_data:/data
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health -o /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   vista-unificada:
@@ -39,14 +76,27 @@ services:
         condition: service_healthy
       hapi-fhir:
         condition: service_started
+      hsb:
+        condition: service_started
     environment:
       DB_HOST: pg_ips
       DB_USER: ips_admin
       DB_PASSWORD: "kali"
       FHIR_BASE_URL: http://hapi-fhir:8080/fhir
+      JWT_SECRET: "ips-secret-jwt-2026-cambiar-en-produccion"
+      AUDIT_DB: /data/auditoria.db
+      SECRET_KEY: "flask-secret-key-2026-cambiar-en-produccion"
+    volumes:
+      - hsb_data:/data   # comparte volumen con hsb para usar la misma BD de auditoría
     ports:
       - "5000:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5000/health -o /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
 volumes:
   pg_ips_data:
+  hsb_data:

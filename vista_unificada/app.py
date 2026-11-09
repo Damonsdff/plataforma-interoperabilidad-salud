@@ -11,12 +11,13 @@ import csv
 import io
 import os
 import sys
+import time
 from collections import Counter
 from datetime import date, datetime
 from uuid import uuid4
 
 import requests
-from flask import Flask, Response, flash, jsonify, redirect, render_template, request, url_for
+from flask import Flask, Response, flash, g, jsonify, make_response, redirect, render_template, request, session, url_for
 
 # Permite importar interoperabilidad/, solucion/ y migrar_a_fhir.py (carpeta padre)
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,8 +45,69 @@ except Exception as error:  # p. ej. si faltan las carpetas del motor
     MOTOR = False
     ERROR_MOTOR = str(error)
 
+# ── Seguridad y Auditoría (Fase 4) ──────────────────────────────────────
+try:
+    from seguridad import USUARIOS, generar_token, usuario_actual, verificar_token
+    from auditoria import get_auditoria
+    SEGURIDAD = True
+except Exception as _e_seg:
+    SEGURIDAD = False
+    def usuario_actual(): return {}
+    def get_auditoria(): return None
+
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "cambiar-esta-clave")
+
+# ── Registrar blueprint de autenticación ──────────────────────────────────
+if SEGURIDAD:
+    try:
+        from auth_app import bp_auth
+        app.register_blueprint(bp_auth)
+
+        # Formulario de login (GET/POST para navegador)
+        @app.route("/login", methods=["GET", "POST"])
+        def login():
+            error = None
+            if request.method == "POST":
+                u = request.form.get("usuario", "").strip()
+                p = request.form.get("password", "").strip()
+                info = USUARIOS.get(u)
+                if info and info["password"] == p:
+                    extra = {}
+                    if "sede" in info and info["sede"]:
+                        extra["sede"] = info["sede"]
+                    if "documento" in info:
+                        extra["documento"] = info["documento"]
+                    token = generar_token(u, info["rol"], **extra)
+                    aud = get_auditoria()
+                    if aud:
+                        aud.registrar(quien=u, que="auth.login", resultado="exito", detalle=f"rol={info['rol']}")
+                    resp = make_response(redirect(url_for("home")))
+                    resp.set_cookie("token", token, httponly=True, samesite="Lax", max_age=3600)
+                    return resp
+                else:
+                    error = "Usuario o contraseña incorrectos."
+                    aud = get_auditoria()
+                    if aud:
+                        aud.registrar(quien=u, que="auth.login", resultado="denegado", detalle="credenciales incorrectas")
+            return render_template("login.html", error=error)
+
+        @app.route("/auth/login-form", methods=["POST"])
+        def login_form():
+            return redirect(url_for("login"))
+
+        @app.route("/logout")
+        def logout():
+            payload = usuario_actual()
+            if payload:
+                aud = get_auditoria()
+                if aud:
+                    aud.registrar(quien=payload.get("sub","?"), que="auth.logout", resultado="exito")
+            resp = make_response(redirect(url_for("home")))
+            resp.delete_cookie("token")
+            return resp
+    except Exception as _e_bp:
+        pass
 
 SEDES = [
     {"nombre_bd": "historia_clinica_sede1", "ciudad": "Sincelejo"},
@@ -215,7 +277,11 @@ def opciones(catalogo):
 
 @app.context_processor
 def utilidades_plantillas():
-    return {"opciones": opciones, "cat": campos57.nombre_catalogo}
+    return {
+        "opciones": opciones,
+        "cat": campos57.nombre_catalogo,
+        "usuario_sesion": usuario_actual() if SEGURIDAD else {},
+    }
 
 
 # ───────────────────────── Inicio ─────────────────────────
@@ -538,6 +604,101 @@ def matriz_csv():
 
 
 preparar_bases()
+
+
+# ───────────────────────── HEALTH y METRICS (RF no funcional) ─────────────
+@app.route("/health")
+def health():
+    """Estado de salud: comprueba PostgreSQL y HAPI FHIR."""
+    estado_sedes = {}
+    for s in SEDES:
+        try:
+            conn = conectar(s["nombre_bd"])
+            conn.close()
+            estado_sedes[s["ciudad"]] = "ok"
+        except Exception:
+            estado_sedes[s["ciudad"]] = "caido"
+
+    try:
+        r = requests.get(f"{FHIR}/metadata", timeout=3, headers={"Accept": "application/fhir+json"})
+        hapi = "ok" if r.ok else "degradado"
+    except Exception:
+        hapi = "caido"
+
+    todo_ok = all(v == "ok" for v in estado_sedes.values()) and hapi == "ok"
+    return jsonify({
+        "servicio": "vista-unificada",
+        "estado": "ok" if todo_ok else "degradado",
+        "hapi_fhir": hapi,
+        "sedes": estado_sedes,
+        "ts": datetime.utcnow().isoformat() + "Z",
+    }), (200 if todo_ok else 207)
+
+
+@app.route("/metrics")
+def metrics():
+    """Métricas básicas de observabilidad."""
+    coberturas = []
+    for s in SEDES:
+        try:
+            pct = calcular_cobertura(s["nombre_bd"])
+            coberturas.append({"ciudad": s["ciudad"], "cobertura_pct": round(pct, 1), "estado": "ok"})
+        except Exception as e:
+            coberturas.append({"ciudad": s["ciudad"], "cobertura_pct": 0.0, "estado": "caido", "error": str(e)})
+
+    fhir_counts = {}
+    try:
+        for tipo in ("Patient", "Encounter", "Condition", "Observation"):
+            fhir_counts[tipo] = requests.get(
+                f"{FHIR}/{tipo}", params={"_summary": "count"}, headers=CABECERAS, timeout=5
+            ).json().get("total", 0)
+    except Exception:
+        fhir_counts["error"] = "HAPI no disponible"
+
+    if request.args.get("format") == "prom":
+        lines = []
+        for s in coberturas:
+            ciudad = s["ciudad"].replace(" ", "_").lower()
+            lines.append(f'cobertura_fhir_pct{{sede="{ciudad}"}} {s["cobertura_pct"]}')
+        for tipo, n in fhir_counts.items():
+            if tipo != "error":
+                lines.append(f'fhir_recursos{{tipo="{tipo}"}} {n}')
+        return Response("\n".join(lines) + "\n", mimetype="text/plain")
+
+    return jsonify({
+        "servicio": "vista-unificada",
+        "coberturas_fhir": coberturas,
+        "recursos_fhir": fhir_counts,
+        "ts": datetime.utcnow().isoformat() + "Z",
+    })
+
+
+# ─────────────── API de degradación graceful (caída de sede) ───────────────
+@app.route("/api/sedes/estado")
+def api_estado_sedes():
+    """
+    Devuelve el estado de cada sede. Si una cae, la vista unificada
+    responde con las otras dos marcando la caída (RF resiliencia).
+    """
+    resultado = []
+    for s in SEDES:
+        try:
+            t0 = time.time()
+            conn = conectar(s["nombre_bd"])
+            conn.cursor().execute("SELECT 1")
+            conn.close()
+            latencia_ms = round((time.time() - t0) * 1000, 1)
+            resultado.append({"ciudad": s["ciudad"], "bd": s["nombre_bd"], "estado": "ok", "latencia_ms": latencia_ms})
+        except Exception as e:
+            resultado.append({"ciudad": s["ciudad"], "bd": s["nombre_bd"], "estado": "caido", "error": str(e)})
+    sedes_ok = sum(1 for r in resultado if r["estado"] == "ok")
+    return jsonify({
+        "sedes": resultado,
+        "sedes_operativas": sedes_ok,
+        "sedes_caidas": len(resultado) - sedes_ok,
+        "vista_disponible": sedes_ok > 0,
+    })
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)

@@ -51,6 +51,14 @@
   <a href="{{ url_for('vista_admision') }}" class="{{ 'activo' if request.endpoint=='vista_admision' }}">Admisionista</a>
   <a href="{{ url_for('vista_reportes') }}" class="{{ 'activo' if request.endpoint=='vista_reportes' }}">Reportero</a>
   <a href="{{ url_for('vista_matriz') }}" class="{{ 'activo' if request.endpoint=='vista_matriz' }}">Matriz 57</a>
+  <span style="margin-left:auto;display:flex;align-items:center;gap:12px;font-size:.85rem;">
+    {% if usuario_sesion and usuario_sesion.sub %}
+      <span class="pill" style="background:rgba(255,255,255,.2);color:#fff;">👤 {{ usuario_sesion.sub }} ({{ usuario_sesion.rol }})</span>
+      <a href="{{ url_for('logout') }}" style="background:rgba(0,0,0,.2);">Salir</a>
+    {% else %}
+      <a href="{{ url_for('login') }}" style="background:rgba(255,255,255,.2);">Iniciar sesión</a>
+    {% endif %}
+  </span>
 </header>
 <main>
   {% with mensajes = get_flashed_messages(with_categories=true) %}

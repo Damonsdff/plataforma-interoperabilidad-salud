@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Iniciar sesión{% endblock %}
+{% block contenido %}
+<div class="card" style="max-width:420px;margin:60px auto;">
+  <h1 style="font-size:1.4rem;margin-bottom:4px;">🔐 Iniciar sesión</h1>
+  <p style="margin-top:4px;color:#6b7785;font-size:.9rem;">Plataforma de Interoperabilidad Clínica — Red de sedes</p>
+
+  {% if error %}<div class="msg error">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/auth/login-form">
+    <div style="margin-bottom:14px;">
+      <label>
+        <span style="font-size:.85rem;">Usuario</span>
+        <input type="text" name="usuario" required autofocus placeholder="ej: medico_perez">
+      </label>
+    </div>
+    <div style="margin-bottom:18px;">
+      <label>
+        <span style="font-size:.85rem;">Contraseña</span>
+        <input type="password" name="password" required placeholder="kali">
+      </label>
+    </div>
+    <button type="submit" style="width:100%;">Entrar</button>
+  </form>
+
+  <details style="margin-top:18px;font-size:.82rem;color:#6b7785;">
+    <summary style="cursor:pointer;">Usuarios de prueba</summary>
+    <table style="margin-top:8px;font-size:.82rem;">
+      <tr><th>Usuario</th><th>Contraseña</th><th>Rol</th></tr>
+      <tr><td>admin_sincelejo</td><td>kali</td><td>Admisionista sede 1</td></tr>
+      <tr><td>admin_cartagena</td><td>kali</td><td>Admisionista sede 2</td></tr>
+      <tr><td>admin_corozal</td><td>kali</td><td>Admisionista sede 3</td></tr>
+      <tr><td>medico_perez</td><td>kali</td><td>Médico</td></tr>
+      <tr><td>medico_garcia</td><td>kali</td><td>Médico</td></tr>
+      <tr><td>auditor</td><td>kali</td><td>Auditor</td></tr>
+      <tr><td>paciente_1007654321</td><td>kali</td><td>Paciente</td></tr>
+    </table>
+  </details>
+</div>
+{% endblock %}
